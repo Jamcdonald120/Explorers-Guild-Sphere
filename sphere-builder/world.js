@@ -11,12 +11,14 @@ class WorldCord{
         
     }
     mouseWheel(event){
-		//print(event.delta/abs(event.delta))
-        this.xOff+=mouseX/this.zoom;
-        this.yOff+=mouseY/this.zoom;
-        this.zoom-=event.delta/abs(event.delta)*this.zoom/10;
-        this.yOff-=mouseY/this.zoom;
-        this.xOff-=mouseX/this.zoom;
+		print(event.delta)
+		if(event.delta){
+			this.xOff+=mouseX/this.zoom;
+			this.yOff+=mouseY/this.zoom;
+			this.zoom-=event.delta/abs(event.delta)*this.zoom/10;
+			this.yOff-=mouseY/this.zoom;
+			this.xOff-=mouseX/this.zoom;
+		}
     }
     screenToWorld( x,  y){
         return this.screenToWorldV(createVector(x,y));   
