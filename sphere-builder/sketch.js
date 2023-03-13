@@ -2,7 +2,7 @@ world = new WorldCord()
 cx=0;
 cy=0;
 var controles=!document.cookie.includes("controles") ;
-
+var mode =1;
 document.cookie = "controles; expires="+(new Date(Date.now() + 86400e3)).toUTCString();
 const  radius=384;
 selected=126
@@ -31,6 +31,48 @@ function keyReleased(){
 		controles=false;
 	}
 }
+function drawSquare(x,y,selectp){
+	try{
+		if(depths[x][y]!=-1){
+			let drawAt=worldToScreen(x,y);
+			noStroke();
+			if(blocks[selected] && blocks[selected][x]&& blocks[selected][x][y]){
+				fill(255,255,0);  
+			}else if(selected>0&&blocks[selected-1] && blocks[selected-1][x]&&blocks[selected-1][x][y]){
+				fill(255,128,0);
+			}else if(depths[x][y]>=126){
+				fill(0,128,255);
+			}else{
+				fill(0,0,255);   
+			}
+			rect(drawAt.x,drawAt.y,world.zoom,world.zoom);
+			stroke(0);
+			if(x>0&&(depths[x-1]&&depths[x-1][y]!=depths[x][y])){
+				line(drawAt.x,drawAt.y,drawAt.x,drawAt.y+world.zoom);
+			}
+		
+			if(x<2*radius-1&&(depths[x+1]&&depths[x+1][y]!=depths[x][y])){
+				line(drawAt.x+world.zoom,drawAt.y,drawAt.x+world.zoom,drawAt.y+world.zoom);
+			}
+			if(y>0&&(depths[x][y-1]!=depths[x][y])){
+				line(drawAt.x,drawAt.y,drawAt.x+world.zoom,drawAt.y);
+			}
+		
+			if(y<2*radius-1&&(depths[x][y+1]!=depths[x][y])){
+				line(drawAt.x,drawAt.y+world.zoom,drawAt.x+world.zoom,drawAt.y+world.zoom);
+			}
+			fill(255);
+			let selx=floor(selectp.x);
+			let sely=floor(selectp.y);
+			if(x==selx||y==sely){
+				textSize(world.zoom/3);
+				text(depths[x][y]-64,drawAt.x+world.zoom/2-textWidth(""+(depths[x][y]-64))/2,drawAt.y+world.zoom/2+textAscent()/2);   
+			}
+		}
+	}catch (error) {
+		console.error(error);
+	}
+}
 function draw() {
 	cursor(ARROW);
 	background(255);
@@ -39,46 +81,34 @@ function draw() {
 	const corner=screenToWorld(width,height);
     strokeWeight(2);
     const selectp=screenToWorld(mouseX,mouseY);   
-	for(let x=max(0,floor(screenOff.x));x<min(corner.x,radius*2);x++){
-        for(let y=max(0,floor(screenOff.y));y<min(corner.y,radius*2);y++){
-            if(depths[x][y]!=-1){
-            	let drawAt=worldToScreen(x,y);
-                noStroke();
-                if(blocks[x][y][selected]){
-                	fill(255,255,0);  
-                }else if(selected>0&&blocks[x][y][selected-1]){
-                    fill(255,128,0);
-                }else if(depths[x][y]>=126){
-                    fill(0,128,255);
-                }else{
-                 	fill(0,0,255);   
-                }
-            	rect(drawAt.x,drawAt.y,world.zoom,world.zoom);
-                stroke(0);
-            	if(x>0&&depths[x-1][y]!=depths[x][y]){
-                	line(drawAt.x,drawAt.y,drawAt.x,drawAt.y+world.zoom);
-            	}
-            
-                if(x<2*radius-1&&depths[x+1][y]!=depths[x][y]){
-                    line(drawAt.x+world.zoom,drawAt.y,drawAt.x+world.zoom,drawAt.y+world.zoom);
-                }
-                if(y>0&&depths[x][y-1]!=depths[x][y]){
-                    line(drawAt.x,drawAt.y,drawAt.x+world.zoom,drawAt.y);
-                }
-            
-                if(y<2*radius-1&&depths[x][y+1]!=depths[x][y]){
-                    line(drawAt.x,drawAt.y+world.zoom,drawAt.x+world.zoom,drawAt.y+world.zoom);
-                }
-                fill(255);
-                let selx=floor(selectp.x);
-                let sely=floor(selectp.y);
-                if(x==selx||y==sely){
-       				textSize(world.zoom/3);
-                	text(depths[x][y]-64,drawAt.x+world.zoom/2-textWidth(""+(depths[x][y]-64))/2,drawAt.y+world.zoom/2+textAscent()/2);   
-                }
-            }
-        }
-    }
+	if(mode==1){
+		for(let x=max(0,floor(screenOff.x));x<min(corner.x,radius*2);x++){
+			for(let y=max(0,floor(screenOff.y));y<min(corner.y,radius*2);y++){
+				drawSquare(x,y,selectp);
+			}
+		}
+	}else if(mode==2){
+		for(let x=max(0,floor(screenOff.x));x<min(corner.x,radius*2);x++){
+			drawSquare(x,floor(selectp.y),selectp);
+		}
+		for(let y=max(0,floor(screenOff.y));y<min(corner.y,radius*2);y++){
+			drawSquare(floor(selectp.x),y,selectp);
+		}
+		for(let i=0;i<2;i++){
+			for(const x in blocks[selected-i]){
+				if(x>=max(0,floor(screenOff.x))&&x<x<min(corner.x,radius*2)){
+					for(const y in blocks[selected-i][x]){
+						//print(x,y);
+						if(y>-max(0,floor(screenOff.y))&&y<min(corner.y,radius*2)){
+							drawSquare(x,y,selectp);
+						}
+					}	
+				}
+			}
+		}
+		
+		
+	}
 	stroke(0);
     strokeWeight(.5);
     
@@ -125,7 +155,7 @@ function draw() {
     if(!(cx==0&&cy==0)){
 		rect(selected2.x,selected2.y,world.zoom,world.zoom);
 		textSize(20);
-		if(x>=0&&x<2*radius&&y>=0&&y<2*radius&&depths[x][y]!=-1){
+		if(cx>=0&&cx<2*radius&&cy>=0&&cy<2*radius&&depths[cx][cy]!=-1){
 			coords2=`(${cx - radius},${depths[cx][cy] - 64},${cy - radius})`
 		}else{
 			coords2=`(${cx - radius},X,${cy - radius})`
@@ -150,7 +180,7 @@ function draw() {
 		rect(width/2-320,height/2-320,640,640);
 		noStroke();
 		fill(0);
-		text("Controls\nclick and drag to move\nuse mouse wheel to scroll in or out\nred X shows current block moused\nthe coords of the moused-over block are shown in the upper left in red\nclick a block to mark it in green\nmarked block's coords are displayed upper left in green\nthe Y coordinate of both blocks is the HIGHEST Y coordinate with a block\nthe blocks in the same row or column as the moused-over block are marked with their Y coordinates\nuse + and - to move the \"selected\" Y elevation\nblocks in the selected Y are marked in yellow\nblocks on the layer below the selected layer are orange\nthe Y coord of the marked row is in the upper right\nthere are 2 colors of blue, lighter blue is above water\n\nIf you are having bad lag, try zooming in\n\n\nhold space to open this window (tap space to close)", width/2-300,height/2-300,600,600);
+		text("Controls\nclick and drag to move\nuse mouse wheel to scroll in or out\nred X shows current block moused\nthe coords of the moused-over block are shown in the upper left in red\nclick a block to mark it in green\nmarked block's coords are displayed upper left in green\nthe Y coordinate of both blocks is the HIGHEST Y coordinate with a block\nthe blocks in the same row or column as the moused-over block are marked with their Y coordinates\nuse + and - to move the \"selected\" Y elevation\nblocks in the selected Y are marked in yellow\nblocks on the layer below the selected layer are orange\nthe Y coord of the marked row is in the upper right\nthere are 2 colors of blue, lighter blue is above water\nPress L to go into limited mode. In limited mode, only the selected layer/row/column are rendered.  This can improve performance\n\nIf you are having bad lag, try zooming in\n\n\n\nhold space to open this window (tap space to close)", width/2-300,height/2-300,600,600);
 
 	}
 	if(deltaTime>200 ){
@@ -171,7 +201,6 @@ function mouseDragged(){
 	world.mouseDragged()
 }
 function keyTyped(){
-	
 	if(key=='+'||key=='='){
         selected+=1;
         selected=min(selected,radius-1);
@@ -180,16 +209,18 @@ function keyTyped(){
         selected-=1;
         selected=max(selected,0);
     }
+	if(key=='l'||key=='L'){
+		mode=3-mode;
+	}
 }
 function mousePressed(event){
-   controles=false;	
+	
   if (event.button === 1) { // middle mouse button
     event.preventDefault(); // prevent default scrolling behavior
     // do something else instead
   }
 }
 function mouseClicked(){
-	controles=false;	
 	let selects=screenToWorld(mouseX,mouseY);
 	
  	let x=int(selects.x);
