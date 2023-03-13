@@ -153,7 +153,7 @@ function draw() {
 		text("Controls\nclick and drag to move\nuse mouse wheel to scroll in or out\nred X shows current block moused\nthe coords of the moused-over block are shown in the upper left in red\nclick a block to mark it in green\nmarked block's coords are displayed upper left in green\nthe Y coordinate of both blocks is the HIGHEST Y coordinate with a block\nthe blocks in the same row or column as the moused-over block are marked with their Y coordinates\nuse + and - to move the \"selected\" Y elevation\nblocks in the selected Y are marked in yellow\nblocks on the layer below the selected layer are orange\nthe Y coord of the marked row is in the upper right\nthere are 2 colors of blue, lighter blue is above water\n\nIf you are having bad lag, try zooming in\n\n\nhold space to open this window (tap space to close)", width/2-300,height/2-300,600,600);
 
 	}
-	if(deltaTime>175 ){
+	if(deltaTime>200 ){
 		stroke(255,0,0);
 		fill(255);
 		rect(width/2-210,0,420,50);
@@ -171,6 +171,7 @@ function mouseDragged(){
 	world.mouseDragged()
 }
 function keyTyped(){
+	
 	if(key=='+'||key=='='){
         selected+=1;
         selected=min(selected,radius-1);
@@ -181,13 +182,14 @@ function keyTyped(){
     }
 }
 function mousePressed(event){
-	
+   controles=false;	
   if (event.button === 1) { // middle mouse button
     event.preventDefault(); // prevent default scrolling behavior
     // do something else instead
   }
 }
 function mouseClicked(){
+	controles=false;	
 	let selects=screenToWorld(mouseX,mouseY);
 	
  	let x=int(selects.x);
